@@ -9,8 +9,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import com.redhat.qe.auto.testng.Assert;
-import com.redhat.qe.auto.testng.LogMessageUtil;
+import com.redhat.qe.Assert;
+import com.redhat.qe.jul.TestRecords;
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.SCPClient;
 
@@ -29,7 +29,7 @@ public class RemoteFileTasks {
 		String dir = new File(filePath).getParent();
 		String fn =  new File(filePath).getName();
 		
-		log.log(Level.INFO, "Creating " + fn + " in " + dir + " on " + conn.getHostname(), LogMessageUtil.Style.Action);
+		log.log(Level.INFO, "Creating " + fn + " in " + dir + " on " + conn.getHostname(), TestRecords.Style.Action);
 		SCPClient scp = new SCPClient(conn);
 		scp.put(contents.getBytes(), fn, dir, mode);
 	}
@@ -48,8 +48,8 @@ public class RemoteFileTasks {
 	 * @author jsefler
 	 */
 	public static int createFile(SSHCommandRunner runner, String filePath, String contents, String perms) {
-		int exitCode = runCommandAndWait(runner, "echo -n -e '"+contents+"' > "+filePath, LogMessageUtil.action());
-		if (exitCode==0 && perms!=null) exitCode = runCommandAndWait(runner, "chmod "+perms+" "+filePath, LogMessageUtil.action());
+		int exitCode = runCommandAndWait(runner, "echo -n -e '"+contents+"' > "+filePath, TestRecords.action());
+		if (exitCode==0 && perms!=null) exitCode = runCommandAndWait(runner, "chmod "+perms+" "+filePath, TestRecords.action());
 		return exitCode;
 	}
 	
@@ -63,7 +63,7 @@ public class RemoteFileTasks {
 	 */
 	public static void putFiles(Connection conn, String destDir, String... sources ) throws IOException  {
 		for (String source: sources)
-			log.log(Level.INFO, "Copying " + source + " to " + destDir + " on " + conn.getHostname(), LogMessageUtil.Style.Action);
+			log.log(Level.INFO, "Copying " + source + " to " + destDir + " on " + conn.getHostname(), TestRecords.Style.Action);
 		SCPClient scp = new SCPClient(conn);
 		scp.put(sources, destDir);
 	}
@@ -78,7 +78,7 @@ public class RemoteFileTasks {
 	 * @author jweiss
 	 */
 	public static void putFile(Connection conn, String source, String dest, String mask) throws IOException  {
-		log.log(Level.INFO, "Copying local file " + source + " to " + dest + " on " + conn.getHostname() + " with mask " + mask, LogMessageUtil.Style.Action);
+		log.log(Level.INFO, "Copying local file " + source + " to " + dest + " on " + conn.getHostname() + " with mask " + mask, TestRecords.Style.Action);
 		SCPClient scp = new SCPClient(conn);
 		if (dest.endsWith("/")) {
 			scp.put(new String[] {source}, null, dest, mask);
@@ -100,7 +100,7 @@ public class RemoteFileTasks {
 	 */
 	public static void getFiles(Connection conn, String localTargetDirectory, String... remoteFiles ) throws IOException {
 		for (String remoteFile: remoteFiles)
-			log.log(Level.INFO, "Copying remote file "+remoteFile+" on "+conn.getHostname()+" to local directory "+localTargetDirectory+".", LogMessageUtil.Style.Action);
+			log.log(Level.INFO, "Copying remote file "+remoteFile+" on "+conn.getHostname()+" to local directory "+localTargetDirectory+".", TestRecords.Style.Action);
 		SCPClient scp = new SCPClient(conn);
 		scp.get(remoteFiles, localTargetDirectory);
 	}
@@ -120,7 +120,7 @@ public class RemoteFileTasks {
 	 * 
 	 */
 	public static int searchReplaceFile (SSHCommandRunner runner, String filePath, String regexp, String replacement) {
-		return runCommandAndWait(runner, "sed -i 's/"+regexp+"/"+replacement+"/g' " + filePath, LogMessageUtil.action());
+		return runCommandAndWait(runner, "sed -i 's/"+regexp+"/"+replacement+"/g' " + filePath, TestRecords.action());
 	}
 	
 	/**
@@ -132,7 +132,7 @@ public class RemoteFileTasks {
 	 * @return - exit code from grep
 	 */
 	public static int grepFile (SSHCommandRunner runner, String filePath, String pattern) {
-		return runCommandAndWait(runner, "grep -E '" + pattern + "' " + filePath, LogMessageUtil.info());
+		return runCommandAndWait(runner, "grep -E '" + pattern + "' " + filePath, TestRecords.info());
 	}
 	
 	/**
@@ -145,7 +145,7 @@ public class RemoteFileTasks {
 	 * @author jsefler
 	 */
 	public static int deleteLines (SSHCommandRunner runner, String filePath, String containingText) {
-		return runCommandAndWait(runner, "sed -i '/"+containingText+"/d' " + filePath, LogMessageUtil.action());
+		return runCommandAndWait(runner, "sed -i '/"+containingText+"/d' " + filePath, TestRecords.action());
 	}
 	
 	/**
@@ -158,7 +158,7 @@ public class RemoteFileTasks {
 	 */
 	public static int markFile (SSHCommandRunner runner, String filePath, String marker) {
 		if (!testExists(runner, filePath)) return 1;	// avoid inadvertently creating a file that does not exist
-		return runCommandAndWait(runner, "echo '"+marker+"' >> "+filePath, LogMessageUtil.action());
+		return runCommandAndWait(runner, "echo '"+marker+"' >> "+filePath, TestRecords.action());
 	}
 	
 	/**
@@ -198,7 +198,7 @@ public class RemoteFileTasks {
 	 */
 	@Deprecated
 	public static int testFileExists (SSHCommandRunner runner, String filePath) {
-		runCommandAndWait(runner, "test -e "+filePath+" && echo 1 || echo 0", LogMessageUtil.info());
+		runCommandAndWait(runner, "test -e "+filePath+" && echo 1 || echo 0", TestRecords.info());
 		if (runner.getStdout().trim().equals("1")) return 1;
 		if (runner.getStdout().trim().equals("0")) return 0;
 		return -1;
@@ -231,9 +231,9 @@ public class RemoteFileTasks {
 
 	public static int updateAugeasConfig(SSHCommandRunner runner, String augeusPath, String newValue){
 		if (newValue == null)
-			return runAugeasCommand(runner, String.format("rm %s", augeusPath), LogMessageUtil.action());
+			return runAugeasCommand(runner, String.format("rm %s", augeusPath), TestRecords.action());
 		else
-			return runAugeasCommand(runner, String.format("set %s '%s'", augeusPath, newValue), LogMessageUtil.action());
+			return runAugeasCommand(runner, String.format("set %s '%s'", augeusPath, newValue), TestRecords.action());
 	}
 	
 	

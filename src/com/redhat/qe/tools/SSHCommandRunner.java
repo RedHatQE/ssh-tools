@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import com.redhat.qe.auto.testng.LogMessageUtil;
+import com.redhat.qe.jul.TestRecords;
 import com.trilead.ssh2.ChannelCondition;
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.Session;
@@ -129,7 +129,7 @@ public class SSHCommandRunner implements Runnable {
 	
 	public void run(LogRecord logRecord) {
 		try {
-			if (logRecord == null) logRecord = LogMessageUtil.fine();
+			if (logRecord == null) logRecord = TestRecords.fine();
 			
 			/*
 			 * Sync'd block prevents other threads from getting the streams before they've been set up here.
@@ -155,7 +155,7 @@ public class SSHCommandRunner implements Runnable {
 		}
 	}
 	public void run() {
-		run(LogMessageUtil.action());
+		run(TestRecords.action());
 	}
 	
 	public Integer waitFor(){
@@ -272,7 +272,7 @@ public class SSHCommandRunner implements Runnable {
 	}
 	
 	public void runCommand(String command){
-		runCommand(command,LogMessageUtil.fine());
+		runCommand(command,TestRecords.fine());
 	}
 	
 	public void runCommand(String command, LogRecord logRecord){
@@ -282,15 +282,15 @@ public class SSHCommandRunner implements Runnable {
 	}
 	
 	public SSHCommandResult runCommandAndWait(String command){
-		return runCommandAndWait(command,null,LogMessageUtil.fine(), false, true);
+		return runCommandAndWait(command,null,TestRecords.fine(), false, true);
 	}
 	
 	public SSHCommandResult runCommandAndWait(String command, boolean liveLogOutput){
-		return runCommandAndWait(command,null,LogMessageUtil.fine(), liveLogOutput, true);
+		return runCommandAndWait(command,null,TestRecords.fine(), liveLogOutput, true);
 	}
 	
 	public SSHCommandResult runCommandAndWait(String command, Long timeoutMS){
-		return runCommandAndWait(command,timeoutMS,LogMessageUtil.fine(), false, true);
+		return runCommandAndWait(command,timeoutMS,TestRecords.fine(), false, true);
 	}
 	
 	public SSHCommandResult runCommandAndWait(String command, LogRecord logRecord){
@@ -298,7 +298,7 @@ public class SSHCommandRunner implements Runnable {
 	}
 	
 	public SSHCommandResult runCommandAndWaitWithoutLogging(String command){
-		return runCommandAndWait(command,null,LogMessageUtil.fine(), false, false);
+		return runCommandAndWait(command,null,TestRecords.fine(), false, false);
 	}
 	
 	/**
