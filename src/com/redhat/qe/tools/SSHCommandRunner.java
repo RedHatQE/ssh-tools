@@ -143,7 +143,8 @@ public class SSHCommandRunner implements Runnable {
 				// sshSession.requestDumbPTY();
 				session = connection.openSession();
 				//session.startShell();
-				session.execCommand(command);
+				//session.execCommand(command);
+				session.execCommand(new String(command.getBytes("UTF-8"), "ISO-8859-1"));
 				out = new StreamGobbler(session.getStdout());
 				err = new StreamGobbler(session.getStderr());
 			}
