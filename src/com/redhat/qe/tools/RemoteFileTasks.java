@@ -175,16 +175,28 @@ public class RemoteFileTasks {
 	 * @author jsefler
 	 */
 	public static String getTailFromMarkedFile (SSHCommandRunner runner, String filePath, String marker, String grepPattern) {		
-		// INEFFICIENT ALGORITHM...
-		//		String grepCommand = "";
-		//		if (grepPattern!=null) grepCommand =  " | grep -E '"+grepPattern+"'";
-		//		SSHCommandResult result = runCommandAndAssert(runner,"(TAIL=''; IFS=$'\\n'; for line in $(tac "+filePath+"); do if [[ $line = '"+marker+"' ]]; then break; fi; if [[ $TAIL = '' ]]; then TAIL=$line; else TAIL=$line'\\n'${TAIL}; fi; done; echo -e $TAIL)"+grepCommand,0,1); // when grepCommand!=null, exitCode=0 means a match was found exitCode=1 means no match was found 
-		//		return result.getStdout();
+		if (!testExists(runner, filePath)) Assert.fail("Cannot getTailFromMarkedFile '"+filePath+"' that does not exist.");
+
+		/* INEFFICIENT ALGORITHM DATED 5/16/2011
+		String grepCommand = "";
+		if (grepPattern!=null) grepCommand =  " | grep -E '"+grepPattern+"'";
+		SSHCommandResult result = runCommandAndAssert(runner,"(TAIL=''; IFS=$'\\n'; for line in $(tac "+filePath+"); do if [[ $line = '"+marker+"' ]]; then break; fi; if [[ $TAIL = '' ]]; then TAIL=$line; else TAIL=$line'\\n'${TAIL}; fi; done; echo -e $TAIL)"+grepCommand,0,1); // when grepCommand!=null, exitCode=0 means a match was found exitCode=1 means no match was found 
+		return result.getStdout();
+		*/
 		
+		/* INEFFICIENT ALGORITHM DATED 6/29/2011
 		if (grepPattern!=null) {
 			return runCommandAndAssert(runner,"(TAIL=''; IFS=$'\\n'; for line in $(egrep '"+grepPattern+"|"+marker+"' "+filePath+" | tac); do if [[ $line = '"+marker+"' ]]; then break; fi; if [[ $TAIL = '' ]]; then TAIL=$line; else TAIL=$line'\\n'${TAIL}; fi; done; echo -e $TAIL)",0).getStdout();
 		} else {
 			return runCommandAndAssert(runner,"(TAIL=''; IFS=$'\\n'; for line in $(tac "+filePath+"); do if [[ $line = '"+marker+"' ]]; then break; fi; if [[ $TAIL = '' ]]; then TAIL=$line; else TAIL=$line'\\n'${TAIL}; fi; done; echo -e $TAIL)",0).getStdout();
+		}
+		*/
+		
+		/* EFFICIENT ALGORITHM DATED 1/28/2013 */
+		if (grepPattern!=null) {
+			return runCommandAndAssert(runner,"awk '/"+marker+"/,0' "+filePath+" | grep -v '"+marker+"' | grep '"+grepPattern+"'",0,1).getStdout();
+		} else {
+			return runCommandAndAssert(runner,"awk '/"+marker+"/,0' "+filePath+" | grep -v '"+marker+"'",0,1).getStdout();
 		}
 	}
 	
