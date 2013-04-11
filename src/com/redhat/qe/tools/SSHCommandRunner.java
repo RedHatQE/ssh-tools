@@ -32,6 +32,7 @@ public class SSHCommandRunner implements Runnable {
 	protected boolean kill = false;
 	protected String command = null;
 	protected Object lock = new Object();
+	protected Long emergencyTimeoutMS = null;
 	
 
 	public SSHCommandRunner(Connection connection,
@@ -160,7 +161,7 @@ public class SSHCommandRunner implements Runnable {
 	}
 	
 	public Integer waitFor(){
-		return waitForWithTimeout(null);
+		return waitForWithTimeout(emergencyTimeoutMS);
 	}
 	
 	/**
@@ -263,6 +264,17 @@ public class SSHCommandRunner implements Runnable {
 		}
 	}
 	
+	/**
+	 * When an emergency timeout is not set, it is possible that the run command will never return.
+	 * Use this method to set an upper limit to prevent the run command from unexpectedly getting stuck.
+	 * If the emergencyTimeout is reached, then the SSHCommandResult should contain an exitCode value of null.
+	 * Pass null to unset the emergencyTimeout.
+	 * @param emergencyTimeoutMS - in milliseconds
+	 */
+	public void setEmergencyTimeout(Long emergencyTimeoutMS) {
+		this.emergencyTimeoutMS = emergencyTimeoutMS;
+	}
+	
 	public void setCommand(String command) {
 		reset();
 		this.command = command;
@@ -283,11 +295,11 @@ public class SSHCommandRunner implements Runnable {
 	}
 	
 	public SSHCommandResult runCommandAndWait(String command){
-		return runCommandAndWait(command,null,TestRecords.fine(), false, true);
+		return runCommandAndWait(command,emergencyTimeoutMS,TestRecords.fine(), false, true);
 	}
 	
 	public SSHCommandResult runCommandAndWait(String command, boolean liveLogOutput){
-		return runCommandAndWait(command,null,TestRecords.fine(), liveLogOutput, true);
+		return runCommandAndWait(command,emergencyTimeoutMS,TestRecords.fine(), liveLogOutput, true);
 	}
 	
 	public SSHCommandResult runCommandAndWait(String command, Long timeoutMS){
@@ -295,11 +307,11 @@ public class SSHCommandRunner implements Runnable {
 	}
 	
 	public SSHCommandResult runCommandAndWait(String command, LogRecord logRecord){
-		return runCommandAndWait(command,null,logRecord, false, true);
+		return runCommandAndWait(command,emergencyTimeoutMS,logRecord, false, true);
 	}
 	
 	public SSHCommandResult runCommandAndWaitWithoutLogging(String command){
-		return runCommandAndWait(command,null,TestRecords.fine(), false, false);
+		return runCommandAndWait(command,emergencyTimeoutMS,TestRecords.fine(), false, false);
 	}
 	
 	/**
