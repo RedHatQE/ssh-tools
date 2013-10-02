@@ -5,11 +5,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ServerSocket;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import com.redhat.qe.jul.TestRecords;
+
 import com.trilead.ssh2.ChannelCondition;
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.Session;
@@ -33,7 +35,7 @@ public class SSHCommandRunner implements Runnable {
 	protected String command = null;
 	protected Object lock = new Object();
 	protected Long emergencyTimeoutMS = null;
-	
+
 
 	public SSHCommandRunner(Connection connection,
 			String command) {
@@ -241,7 +243,20 @@ public class SSHCommandRunner implements Runnable {
 		return session.getExitStatus();
 	}
 
-	
+	public int getFreeLocalPort() throws IOException {
+    ServerSocket freeSocket = null;
+    int freePort;
+    try {
+      freeSocket = new ServerSocket(0);
+      freePort = freeSocket.getLocalPort();
+    } finally {
+      if (freeSocket != null) {
+        freeSocket.close();
+      }
+    }
+    return freePort;
+  }
+
 	/**
 	 * Consumes entire stdout stream of the command, this will block until the stream is closed.
 	 * @return entire contents of stdout stream
@@ -279,7 +294,23 @@ public class SSHCommandRunner implements Runnable {
 		reset();
 		this.command = command;
 	}
-	
+
+  public ForwardedPort forwardPort(int remotePort) throws IOException {
+    return forwardPort(remotePort, "localhost", getFreeLocalPort());
+  }
+
+  public ForwardedPort forwardPort(int remotePort,
+      String remoteHost) throws IOException {
+    return forwardPort(remotePort, remoteHost, getFreeLocalPort());
+  }
+
+  public ForwardedPort forwardPort(int remotePort,
+      String remoteHost, int localPort) throws IOException {
+    return new ForwardedPort(remotePort, remoteHost, localPort,
+        this.connection.createLocalPortForwarder(localPort, remoteHost,
+        remotePort));
+  }
+
 	public String getCommand() {
 		return command;
 	}
