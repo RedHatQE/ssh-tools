@@ -56,7 +56,7 @@ public class ForwardedPort {
 
   @Override
   public String toString() {
-    return String.format("[ForwardedPort localPort=%d host=%s remotePort=%s]",
+    return String.format("[ForwardedPort localPort=%d host=%s remotePort=%d]",
         localPort, remoteHost, remotePort);
   }
 
