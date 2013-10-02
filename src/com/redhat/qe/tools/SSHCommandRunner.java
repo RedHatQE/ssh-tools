@@ -296,19 +296,20 @@ public class SSHCommandRunner implements Runnable {
 		this.command = command;
 	}
 
-  public LocalPortForwarder forwardPort(int remotePort) throws IOException {
+  public ForwardedPort forwardPort(int remotePort) throws IOException {
     return forwardPort(remotePort, "localhost", getFreeLocalPort());
   }
 
-  public LocalPortForwarder forwardPort(int remotePort,
+  public ForwardedPort forwardPort(int remotePort,
       String remoteHost) throws IOException {
     return forwardPort(remotePort, remoteHost, getFreeLocalPort());
   }
 
-  public LocalPortForwarder forwardPort(int remotePort,
+  public ForwardedPort forwardPort(int remotePort,
       String remoteHost, int localPort) throws IOException {
-    return this.connection.createLocalPortForwarder(localPort, remoteHost,
-        remotePort);
+    return new ForwardedPort(remotePort, remoteHost, localPort,
+        this.connection.createLocalPortForwarder(localPort, remoteHost,
+        remotePort));
   }
 
 	public String getCommand() {
