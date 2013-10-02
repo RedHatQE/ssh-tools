@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 import com.redhat.qe.jul.TestRecords;
 
 import com.trilead.ssh2.ChannelCondition;
-import com.trilead.ssh2.LocalPortForwarder;
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.Session;
 import com.trilead.ssh2.StreamGobbler;
