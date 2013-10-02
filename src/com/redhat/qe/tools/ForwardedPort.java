@@ -13,6 +13,7 @@ public class ForwardedPort {
   protected static Logger log = Logger.getLogger(ForwardedPort.class.getName());
 
   private LocalPortForwarder forwarder;
+  private boolean isForwarding;
   private int localPort;
   private String remoteHost;
   private int remotePort;
@@ -22,11 +23,14 @@ public class ForwardedPort {
     this.localPort = localPort;
     this.forwarder = forwarder;
     this.remoteHost = remoteHost;
+    this.remotePort = remotePort;
+    isForwarding = true;
   }
 
   public void close() {
     try {
       forwarder.close();
+      isForwarding = false;
     } catch (IOException e) {
       StringWriter sw = new StringWriter();
       e.printStackTrace(new PrintWriter(sw));
@@ -44,6 +48,10 @@ public class ForwardedPort {
 
   public int getRemotePort() {
     return remotePort;
+  }
+
+  public boolean isForwarding() {
+    return isForwarding;
   }
 
   @Override
