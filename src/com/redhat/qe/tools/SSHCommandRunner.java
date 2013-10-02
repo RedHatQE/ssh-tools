@@ -297,12 +297,17 @@ public class SSHCommandRunner implements Runnable {
 	}
 
   public LocalPortForwarder forwardPort(int remotePort) throws IOException {
-    return forwardPort(remotePort, getFreeLocalPort());
+    return forwardPort(remotePort, "localhost", getFreeLocalPort());
   }
 
   public LocalPortForwarder forwardPort(int remotePort,
-      int localPort) throws IOException {
-    return this.connection.createLocalPortForwarder(localPort, "localhost",
+      String remoteHost) throws IOException {
+    return forwardPort(remotePort, remoteHost, getFreeLocalPort());
+  }
+
+  public LocalPortForwarder forwardPort(int remotePort,
+      String remoteHost, int localPort) throws IOException {
+    return this.connection.createLocalPortForwarder(localPort, remoteHost,
         remotePort);
   }
 
