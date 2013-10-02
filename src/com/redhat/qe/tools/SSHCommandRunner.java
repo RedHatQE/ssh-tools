@@ -5,15 +5,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ServerSocket;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import com.redhat.qe.jul.TestRecords;
-import com.trilead.ssh2.ChannelCondition;
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.Session;
-import com.trilead.ssh2.StreamGobbler;
+import com.trilead.ssh2.*;
 
 public class SSHCommandRunner implements Runnable {
 
@@ -33,7 +31,7 @@ public class SSHCommandRunner implements Runnable {
 	protected String command = null;
 	protected Object lock = new Object();
 	protected Long emergencyTimeoutMS = null;
-	
+
 
 	public SSHCommandRunner(Connection connection,
 			String command) {
@@ -241,7 +239,20 @@ public class SSHCommandRunner implements Runnable {
 		return session.getExitStatus();
 	}
 
-	
+	public int getFreeLocalPort() throws IOException {
+    ServerSocket freeSocket = null;
+    int freePort;
+    try {
+      freeSocket = new ServerSocket(0);
+      freePort = freeSocket.getLocalPort();
+    } finally {
+      if (freeSocket != null) {
+        freeSocket.close();
+      }
+    }
+    return freePort;
+  }
+
 	/**
 	 * Consumes entire stdout stream of the command, this will block until the stream is closed.
 	 * @return entire contents of stdout stream
@@ -279,7 +290,17 @@ public class SSHCommandRunner implements Runnable {
 		reset();
 		this.command = command;
 	}
-	
+
+  public LocalPortForwarder forwardPort(int remotePort) throws IOException {
+    return forwardPort(remotePort, getFreeLocalPort());
+  }
+
+  public LocalPortForwarder forwardPort(int remotePort,
+      int localPort) throws IOException {
+    return this.connection.createLocalPortForwarder(localPort, "localhost",
+        remotePort);
+  }
+
 	public String getCommand() {
 		return command;
 	}
