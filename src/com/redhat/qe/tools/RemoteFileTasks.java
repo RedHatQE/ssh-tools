@@ -194,9 +194,9 @@ public class RemoteFileTasks {
 		
 		/* EFFICIENT ALGORITHM DATED 1/28/2013 */
 		if (grepPattern!=null) {
-			return runCommandAndAssert(runner,"awk '/"+marker+"/,0' "+filePath+" | grep -v '"+marker+"' | grep '"+grepPattern+"'",0,1).getStdout();
+			return runCommandAndAssert(runner,"awk '/"+marker+"/,0' "+filePath+" | grep -v --text '"+marker+"' | grep --text '"+grepPattern+"'",0,1).getStdout();
 		} else {
-			return runCommandAndAssert(runner,"awk '/"+marker+"/,0' "+filePath+" | grep -v '"+marker+"'",0,1).getStdout();
+			return runCommandAndAssert(runner,"awk '/"+marker+"/,0' "+filePath+" | grep -v --text '"+marker+"'",0,1).getStdout();
 		}
 	}
 	
