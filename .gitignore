@@ -4,3 +4,6 @@ test-output
 lib
 .gradle
 build
+.classpath
+.project
+target
