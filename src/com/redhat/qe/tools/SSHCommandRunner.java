@@ -170,7 +170,7 @@ public class SSHCommandRunner implements Runnable {
 	 * @param timeoutMS - time out, in milliseconds
 	 * @return null if command was interrupted or timedout, the command return code otherwise
 	 */
-	public Integer waitForWithTimeout(Long timeoutMS){
+	public Integer waitForWithTimeout(Long timeoutMS) {
 		/*getStderr();
 		getStdout();*/
 		//causes problem when another thread is reading the 'live' output.
@@ -185,7 +185,12 @@ public class SSHCommandRunner implements Runnable {
 				timedOut = true;
 				break;
 			}
-			res = session.waitForCondition(cond, 1000);
+      try {
+        res = session.waitForCondition(cond, 1000);
+      }
+      catch (InterruptedException ie) {
+          ie.printStackTrace();
+      }
 		}
 		Integer exitCode = null;
 		if (! (kill || timedOut))
