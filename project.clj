@@ -4,7 +4,10 @@
   :java-source-paths ["src"] ;lein2
   :javac-options {:debug "on"}
   :dependencies [;[com.trilead/trilead-ssh2 "build213-svnkit-1.3-patch"]
-                 [org.jenkins-ci/trilead-ssh2 "build-217-jenkins-11"]
+                 ;;[org.jenkins-ci/trilead-ssh2 "build-217-jenkins-11"]
+                 [com.trilead/trilead-ssh2 "1.0.0-build221"]
                  [com.redhat.qe/jul.test.records "1.0.1"],
                  [com.redhat.qe/assertions "1.0.2"]]
-  :repositories [["jenkins-ci" "https://repo.jenkins-ci.org/public"]])
+  :repositories [["jenkins-ci" "https://repo.jenkins-ci.org/public"]]
+  :deploy-repositories [["releases" :clojars]
+                        ["snapshots" :clojars]])

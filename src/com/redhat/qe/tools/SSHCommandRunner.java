@@ -185,12 +185,12 @@ public class SSHCommandRunner implements Runnable {
 				timedOut = true;
 				break;
 			}
-      try {
+      /* try { */
         res = session.waitForCondition(cond, 1000);
-      }
+        /* } 
       catch (InterruptedException ie) {
           ie.printStackTrace();
-      }
+          } */
 		}
 		Integer exitCode = null;
 		if (! (kill || timedOut))
