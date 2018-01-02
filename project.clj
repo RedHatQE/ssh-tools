@@ -10,14 +10,15 @@
                  [org.bouncycastle/bcprov-jdk15on "1.57"]
                  [org.bouncycastle/bcpkix-jdk15on "1.57"]
                  [com.jcraft/jzlib "1.1.3"]
-                 [junit/junit "4.12"]
                  [org.clojure/clojure "1.8.0"]
                  [net.i2p.crypto/eddsa "0.2.0"]]
   :repositories [["jenkins-ci" "https://repo.jenkins-ci.org/public"]]
   :deploy-repositories [["releases" :clojars]
                         ["snapshots" :clojars]]
-  ;;:plugins [[quickie "0.4.2"]]
   :profiles {:dev {:plugins [[com.jakemccrary/lein-test-refresh "0.22.0"]]
-                   :dependencies [[spyscope "0.1.5"]]
+                   :dependencies [[spyscope "0.1.5"]
+                                  [junit/junit "4.12"]
+                                  [yogthos/config "0.9"]]
+                   :resource-paths ["src/test/resources"]
                    :injections [(require 'spyscope.core)]}}
 )
