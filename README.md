@@ -1,6 +1,6 @@
 # SSH tools for automated testing
 
-Contains some extensions to the Trilead SSH library that make running remote command easier (see **SSHCommandRunner**). 
+Contains some extensions to a SSH library that make running remote command easier (see **SSHCommandRunner**). 
 Allows running commands on remote host and returning separate stdout, stderr.  Also has some functions to copy and move files
 from one host to another (see **RemoteFileTasks**).
 
@@ -20,7 +20,7 @@ from one host to another (see **RemoteFileTasks**).
    
 ## Testing
 
-Most tests are written in `clojure`. You can see them in `src/test/clojure`.
+Most tests are written in `clojure`. You can see them in `src/test/clojure`. Or see `src/test/java` for junit tests.
 
 Configuration of tests is placed in `src/test/resources`.
 
