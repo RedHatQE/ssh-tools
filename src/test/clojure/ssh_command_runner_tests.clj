@@ -5,6 +5,8 @@
             [config.core :refer [env]])
   (:import [com.redhat.qe.tools SSHCommandRunner]
            [net.schmizz.sshj SSHClient]
+           [java.util.concurrent TimeoutException]
+           [net.schmizz.sshj.connection ConnectionException]
            [net.schmizz.sshj.userauth.keyprovider KeyProvider]
            [net.schmizz.sshj.connection.channel.direct Session]))
 
@@ -77,3 +79,17 @@
       (is (nil? exitcode))
       (. cmd waitForWithTimeout 1000)
       (is (= 0 (. cmd getExitCode))))))
+
+(deftest ssh-command-runner-long-command-test
+  (let [cmd (new SSHCommandRunner @hostname @user @password "hostname")]
+    (is (thrown? RuntimeException
+                 (.runCommand cmd "hostname && sleep 2")))))
+
+(deftest ssh-command-runner-long-command-with-timeout-test
+  (let [cmd (new SSHCommandRunner @hostname @user @password "hostname")]
+    (.setEmergencyTimeout cmd 10000)
+    (.runCommand cmd "hostname && sleep 2")
+    (let [stdout (.. cmd getStdout trim)
+          stderr (. cmd getStderr)]
+      (is (s/starts-with? @hostname stdout))
+      (is (s/blank? stderr)))))

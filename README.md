@@ -28,6 +28,7 @@ The vulnerable part of config file is read from a system environment.
 
 ```shell
 export SERVER_HOSTNAME="some-rserver.domain.com"
+export SERVER_USER="root"
 export SERVER_PASSWORD="user-password"
 export PRIVATE_KEY_PASSWORD="key-password"
 lein test-refresh
