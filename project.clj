@@ -1,6 +1,6 @@
 (defproject com.redhat.qe/ssh-tools "2.0.0-SNAPSHOT"
   :description "A wrapper for sshj and some CLI tools"
-  :java-source-paths ["src/main/java" "src/test/java"] ;lein2
+  :java-source-paths ["src/main/java"] ;lein2
   :source-paths ["src/main/clojure"]
   :test-paths ["src/test/clojure"]
   :javac-options {:debug "on"}
@@ -19,6 +19,7 @@
                    :dependencies [[spyscope "0.1.5"]
                                   [junit/junit "4.12"]
                                   [yogthos/config "0.9"]]
+                   :java-source-paths ["src/main/java" "src/test/java"]
                    :resource-paths ["src/test/resources"]
                    :injections [(require 'spyscope.core)]}}
 )
