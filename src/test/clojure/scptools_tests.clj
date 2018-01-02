@@ -3,21 +3,33 @@
             [clojure.string :as s]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [config.core :refer [env]])
   (:import [com.redhat.qe.tools SSHCommandRunner]
            [com.redhat.qe.tools SCPTools]
            [net.schmizz.sshj.xfer.scp.SCPFileTransfer]
            [java.util UUID]))
 
-(def hostname "jstavel-rhel7-server.usersys.redhat.com")
-(def user "root")
-(def password "redhat")
-(def ssh-key-pem-file-path "src/test/resources/test_rsa")
+(def hostname (atom ""))
+(def user (atom ""))
+(def password (atom ""))
+(def private-key-path (atom ""))
+(def private-key-password (atom ""))
+
+(defn load-config [f]
+  (reset! hostname (:server-hostname env))
+  (reset! user (:server-user env))
+  (reset! password (:server-password env))
+  (reset! private-key-path (:private-key-path env))
+  (reset! private-key-password (:private-key-password env))
+  (f))
+
+(use-fixtures :once load-config)
 
 (deftest sendFile-test
-  (let [ssh-key-pem-file (io/file ssh-key-pem-file-path)
-        scptools (new SCPTools hostname user ssh-key-pem-file password)
-        runner (new SSHCommandRunner hostname user password "hostname")]
+  (let [ssh-key-pem-file (io/file @private-key-path)
+        scptools (new SCPTools @hostname @user ssh-key-pem-file @private-key-password)
+        runner (new SSHCommandRunner @hostname @user @password "hostname")]
     (let [uuid (-> (UUID/randomUUID) .toString)
           tmp-dir (io/file "/tmp" uuid)
           file01 (-> "src/test/resources/file01.txt" io/file)]
@@ -28,20 +40,16 @@
                                      #(.getStdout %1)
                                      #(.getStderr %1)) runner)]
         (is (= "is directory!" (.trim stdout)))
-        (.close scptools)
-        )
-      )
-    )
-  )
+        (.close scptools)))))
 
 (deftest getFile-test
-  (let [ssh-key-pem-file (io/file ssh-key-pem-file-path)
+  (let [ssh-key-pem-file (io/file @private-key-path)
         uuid (-> (UUID/randomUUID) .toString)
         tmp-dir (io/file "/tmp" uuid)
         path-of-tmp-dir (.toString tmp-dir)
-        runner (new SSHCommandRunner hostname user password "hostname")
+        runner (new SSHCommandRunner @hostname @user @password "hostname")
         file01 (-> "src/test/resources/file01.txt" io/file)
-        scptools (new SCPTools hostname user ssh-key-pem-file password)]
+        scptools (new SCPTools @hostname @user ssh-key-pem-file @private-key-password)]
     (.runCommand runner (str "mkdir " tmp-dir))
     (.sendFile scptools (.getAbsolutePath file01) (.toString tmp-dir))
     (shell/with-sh-env {:LC_ALL "en_US.UTF-8"}
