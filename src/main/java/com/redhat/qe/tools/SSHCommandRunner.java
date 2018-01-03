@@ -45,6 +45,7 @@ public class SSHCommandRunner implements Runnable {
 		super();
 		this.connection = connection;
 		this.command = command;
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
 	}
 	
 	
@@ -65,6 +66,7 @@ public class SSHCommandRunner implements Runnable {
 		this.connection = ssh;
 		this.user = user;
 		this.command = command;
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
 	}
 
 	public SSHCommandRunner(String server,
@@ -88,6 +90,7 @@ public class SSHCommandRunner implements Runnable {
 		this.connection = ssh;
 		this.user = user;
 		this.command = command;
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
 	}
 	
 	public SSHCommandRunner(String server,
@@ -105,6 +108,7 @@ public class SSHCommandRunner implements Runnable {
 		this.connection = ssh;
 		this.user = user;
 		this.command = command;
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
 	}
 
 	public SSHCommandRunner(String server,

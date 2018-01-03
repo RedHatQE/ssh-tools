@@ -33,3 +33,12 @@ export SERVER_PASSWORD="user-password"
 export PRIVATE_KEY_PASSWORD="key-password"
 lein test-refresh
 ```
+
+## Emergency Timeout
+
+There is a way to set a default `emergencyTimeoutMS` variable.
+
+You can use a system property `ssh.emergencyTimeoutMS` to do so.
+
+```java
+java -Dssh.emergencyTimeoutMS=10000 run-this.java```
