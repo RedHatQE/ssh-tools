@@ -93,3 +93,12 @@
           stderr (. cmd getStderr)]
       (is (s/starts-with? @hostname stdout))
       (is (s/blank? stderr)))))
+
+(deftest ssh-command-runner-long-command-with-system-property-timeout-test
+  (System/setProperty "ssh.emergencyTimeoutMS" "10000")
+  (let [cmd (new SSHCommandRunner @hostname @user @password "hostname")]
+    (.runCommand cmd "hostname && sleep 2")
+    (let [stdout (.. cmd getStdout trim)
+          stderr (. cmd getStderr)]
+      (is (s/starts-with? @hostname stdout))
+      (is (s/blank? stderr)))))
