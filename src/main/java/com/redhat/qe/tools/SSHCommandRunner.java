@@ -18,7 +18,9 @@ import net.schmizz.sshj.connection.ConnectionException;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
 import net.schmizz.sshj.transport.TransportException;
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.keyprovider.KeyProvider;
+
 
 public class SSHCommandRunner implements Runnable {
 
@@ -35,9 +37,10 @@ public class SSHCommandRunner implements Runnable {
 	protected boolean kill = false;
 	protected String command = null;
 	protected Object lock = new Object();
-	protected Long emergencyTimeoutMS = 1000l;
+	protected Long emergencyTimeoutMS = 1000l; // you can change the value by a system property `ssh.emergencyTimeoutMS`
 	protected Integer exitCode;
 	protected Command actuallCommand = null;
+  protected boolean verifyHosts = true;  // you can change the value by a system property `ssh.verifyHosts`
 
 
 	public SSHCommandRunner(SSHClient connection,
@@ -46,6 +49,7 @@ public class SSHCommandRunner implements Runnable {
 		this.connection = connection;
 		this.command = command;
     this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
 	
 	
@@ -56,6 +60,9 @@ public class SSHCommandRunner implements Runnable {
 			String command) throws IOException{
 		super();
 		SSHClient ssh = new SSHClient();
+    if( !this.verifyHosts ) {
+      ssh.addHostKeyVerifier(new PromiscuousVerifier());
+    }
 		ssh.loadKnownHosts();
 		ssh.connect(server);
 		KeyProvider keyProvider = ssh.loadKeys(sshPemFile.toString(), passphrase);
@@ -67,6 +74,7 @@ public class SSHCommandRunner implements Runnable {
 		this.user = user;
 		this.command = command;
     this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
 
 	public SSHCommandRunner(String server,
@@ -77,6 +85,9 @@ public class SSHCommandRunner implements Runnable {
 			String command) throws IOException{
 		super();
 		SSHClient ssh = new SSHClient();
+    if( !this.verifyHosts ) {
+      ssh.addHostKeyVerifier(new PromiscuousVerifier());
+    }
 		ssh.loadKnownHosts();
 		ssh.connect(server);
 		KeyProvider keyProvider = ssh.loadKeys(sshPemFile.toString(), passphrase);
@@ -91,6 +102,7 @@ public class SSHCommandRunner implements Runnable {
 		this.user = user;
 		this.command = command;
     this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
 	
 	public SSHCommandRunner(String server,
@@ -99,6 +111,9 @@ public class SSHCommandRunner implements Runnable {
 			String command) throws IOException{
 		super();
 		SSHClient ssh = new SSHClient();
+    if( !this.verifyHosts ) {
+      ssh.addHostKeyVerifier(new PromiscuousVerifier());
+    }
 		ssh.loadKnownHosts();
 		ssh.connect(server);
 		ssh.authPassword(user, password);
@@ -109,6 +124,7 @@ public class SSHCommandRunner implements Runnable {
 		this.user = user;
 		this.command = command;
     this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
 
 	public SSHCommandRunner(String server,
