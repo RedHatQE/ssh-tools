@@ -7,6 +7,7 @@
            [net.schmizz.sshj SSHClient]
            [java.util.concurrent TimeoutException]
            [net.schmizz.sshj.connection ConnectionException]
+           [net.schmizz.sshj.transport.verification PromiscuousVerifier]
            [net.schmizz.sshj.userauth.keyprovider KeyProvider]
            [net.schmizz.sshj.connection.channel.direct Session]))
 
@@ -41,6 +42,24 @@
 (deftest ssh-client-rsa-key-test
   (let [ssh (new SSHClient)]
     (doto ssh
+      .loadKnownHosts
+      (.connect @hostname))
+    (let [keypar (.loadKeys ssh
+                            (-> @private-key-path
+                                io/file
+                                (.getAbsolutePath))
+                            (char-array @private-key-password))]
+      (.authPublickey ssh @user [keypar])
+      (let [session (.startSession ssh)]
+        (let [cmd (.exec session "hostname")]
+          (.join cmd)
+          (is (= 0 (.getExitStatus cmd))))))
+    (.close ssh)))
+
+(deftest ssh-client-rsa-key-with-promiscuous-verifier-test
+  (let [ssh (new SSHClient)]
+    (doto ssh
+      (.addHostKeyVerifier (new PromiscuousVerifier))
       .loadKnownHosts
       (.connect @hostname))
     (let [keypar (.loadKeys ssh
@@ -98,6 +117,16 @@
   (System/setProperty "ssh.emergencyTimeoutMS" "10000")
   (let [cmd (new SSHCommandRunner @hostname @user @password "hostname")]
     (.runCommand cmd "hostname && sleep 2")
+    (let [stdout (.. cmd getStdout trim)
+          stderr (. cmd getStderr)]
+      (is (s/starts-with? @hostname stdout))
+      (is (s/blank? stderr)))))
+
+(deftest ssh-command-runner-rsa-key-with-system-property-verifyHosts-test
+  (System/setProperty "ssh.verifyHosts" "false")
+  (let [key-file (io/file @private-key-path)
+        cmd (new SSHCommandRunner @hostname @user key-file @password "hostname")]
+    (.runCommand cmd "hostname")
     (let [stdout (.. cmd getStdout trim)
           stderr (. cmd getStderr)]
       (is (s/starts-with? @hostname stdout))
