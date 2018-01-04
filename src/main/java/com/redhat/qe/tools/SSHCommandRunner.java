@@ -59,8 +59,13 @@ public class SSHCommandRunner implements Runnable {
 			String passphrase,
 			String command) throws IOException{
 		super();
+
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+
 		SSHClient ssh = new SSHClient();
     if( !this.verifyHosts ) {
+      log.info("a host verification has been switched OFF");
       ssh.addHostKeyVerifier(new PromiscuousVerifier());
     }
 		ssh.loadKnownHosts();
@@ -73,8 +78,6 @@ public class SSHCommandRunner implements Runnable {
 		this.connection = ssh;
 		this.user = user;
 		this.command = command;
-    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
-    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
 
 	public SSHCommandRunner(String server,
@@ -84,8 +87,13 @@ public class SSHCommandRunner implements Runnable {
 			String pemPassphrase,
 			String command) throws IOException{
 		super();
+
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
+
 		SSHClient ssh = new SSHClient();
     if( !this.verifyHosts ) {
+      log.info("a host verification has been switched OFF");
       ssh.addHostKeyVerifier(new PromiscuousVerifier());
     }
 		ssh.loadKnownHosts();
@@ -101,8 +109,6 @@ public class SSHCommandRunner implements Runnable {
 		this.connection = ssh;
 		this.user = user;
 		this.command = command;
-    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
-    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
 	
 	public SSHCommandRunner(String server,
@@ -110,8 +116,13 @@ public class SSHCommandRunner implements Runnable {
 			String password,
 			String command) throws IOException{
 		super();
+
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
+
 		SSHClient ssh = new SSHClient();
     if( !this.verifyHosts ) {
+      log.info("a host verification has been switched OFF");
       ssh.addHostKeyVerifier(new PromiscuousVerifier());
     }
 		ssh.loadKnownHosts();
@@ -123,8 +134,6 @@ public class SSHCommandRunner implements Runnable {
 		this.connection = ssh;
 		this.user = user;
 		this.command = command;
-    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
-    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
 
 	public SSHCommandRunner(String server,
