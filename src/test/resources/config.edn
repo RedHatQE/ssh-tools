@@ -1,0 +1,5 @@
+{:server-hostname ""
+ :server-user "root"
+ :server-password ""
+ :private-key-path "src/test/resources/test_rsa"
+ :private-key-password ""}

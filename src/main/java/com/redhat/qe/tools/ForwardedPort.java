@@ -1,7 +1,7 @@
 package com.redhat.qe.tools;
 
-import com.trilead.ssh2.LocalPortForwarder;
-
+//import com.trilead.ssh2.LocalPortForwarder;
+import net.schmizz.sshj.connection.channel.direct.LocalPortForwarder;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;

@@ -6,23 +6,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import com.redhat.qe.jul.TestRecords;
 
-import com.trilead.ssh2.ChannelCondition;
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.Session;
-import com.trilead.ssh2.StreamGobbler;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.ConnectionException;
+import net.schmizz.sshj.connection.channel.direct.Session;
+import net.schmizz.sshj.connection.channel.direct.Session.Command;
+import net.schmizz.sshj.transport.TransportException;
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
+import net.schmizz.sshj.userauth.keyprovider.KeyProvider;
+
 
 public class SSHCommandRunner implements Runnable {
 
-	protected Connection connection;
+	protected SSHClient connection;
 	protected String user = null;
-	
-
 	protected Session session;
 	protected InputStream out;
 	protected static Logger log = Logger.getLogger(SSHCommandRunner.class.getName());
@@ -34,14 +37,19 @@ public class SSHCommandRunner implements Runnable {
 	protected boolean kill = false;
 	protected String command = null;
 	protected Object lock = new Object();
-	protected Long emergencyTimeoutMS = null;
+	protected Long emergencyTimeoutMS = 1000l; // you can change the value by a system property `ssh.emergencyTimeoutMS`
+	protected Integer exitCode;
+	protected Command actuallCommand = null;
+  protected boolean verifyHosts = true;  // you can change the value by a system property `ssh.verifyHosts`
 
 
-	public SSHCommandRunner(Connection connection,
+	public SSHCommandRunner(SSHClient connection,
 			String command) {
 		super();
 		this.connection = connection;
 		this.command = command;
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
 	
 	
@@ -51,13 +59,23 @@ public class SSHCommandRunner implements Runnable {
 			String passphrase,
 			String command) throws IOException{
 		super();
-		Connection newConn = new Connection(server);
-		newConn.connect();
-		if (!newConn.authenticateWithPublicKey(user, sshPemFile, passphrase)) {
-			throw new RuntimeException("Could not log in to " + newConn.getHostname() + " with the given credentials ("+user+").");
-		}
 
-		this.connection = newConn;
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+
+		SSHClient ssh = new SSHClient();
+    if( !this.verifyHosts ) {
+      log.info("a host verification has been switched OFF");
+      ssh.addHostKeyVerifier(new PromiscuousVerifier());
+    }
+		ssh.loadKnownHosts();
+		ssh.connect(server);
+		KeyProvider keyProvider = ssh.loadKeys(sshPemFile.toString(), passphrase);
+		ssh.authPublickey(user, keyProvider);
+		if(!ssh.isAuthenticated()) {
+			throw new RuntimeException("Could not log in to " + ssh.getRemoteHostname() + " with the given credentials ("+user+").");						
+		}
+		this.connection = ssh;
 		this.user = user;
 		this.command = command;
 	}
@@ -69,21 +87,26 @@ public class SSHCommandRunner implements Runnable {
 			String pemPassphrase,
 			String command) throws IOException{
 		super();
-		Connection newConn = new Connection(server);
-		newConn.connect();
-		try {
-			newConn.authenticateWithPublicKey(user, sshPemFile, pemPassphrase);
-		}
-		catch (IOException e) {
-			//e.printStackTrace();
-			newConn = new Connection(server);
-			newConn.connect();
-			if (!newConn.authenticateWithPassword(user, passphrase)) {
-				throw new RuntimeException("Could not log in to " + newConn.getHostname() + " with the given credentials ("+user+").");
+
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
+
+		SSHClient ssh = new SSHClient();
+    if( !this.verifyHosts ) {
+      log.info("a host verification has been switched OFF");
+      ssh.addHostKeyVerifier(new PromiscuousVerifier());
+    }
+		ssh.loadKnownHosts();
+		ssh.connect(server);
+		KeyProvider keyProvider = ssh.loadKeys(sshPemFile.toString(), passphrase);
+		ssh.authPublickey(user, keyProvider);
+		if(!ssh.isAuthenticated()) {
+			ssh.authPassword(user, passphrase);
+			if (!ssh.isAuthenticated()) {
+				throw new RuntimeException("Could not log in to " + ssh.getRemoteHostname() + " with the given credentials ("+user+").");	
 			}
 		}
-
-		this.connection = newConn;
+		this.connection = ssh;
 		this.user = user;
 		this.command = command;
 	}
@@ -93,21 +116,22 @@ public class SSHCommandRunner implements Runnable {
 			String password,
 			String command) throws IOException{
 		super();
-		Connection newConn = new Connection(server);
-		newConn.connect();
-		try {
-			newConn.authenticateWithPassword(user, password);
-		}
-		catch (IOException e) {
-			//e.printStackTrace();
-			newConn = new Connection(server);
-			newConn.connect();
-			if (!newConn.authenticateWithPassword(user, password)) {
-				throw new RuntimeException("Could not log in to " + newConn.getHostname() + " with the given credentials ("+user+").");
-			}
-		}
 
-		this.connection = newConn;
+    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
+    this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
+
+		SSHClient ssh = new SSHClient();
+    if( !this.verifyHosts ) {
+      log.info("a host verification has been switched OFF");
+      ssh.addHostKeyVerifier(new PromiscuousVerifier());
+    }
+		ssh.loadKnownHosts();
+		ssh.connect(server);
+		ssh.authPassword(user, password);
+		if (!ssh.isAuthenticated()) {
+				throw new RuntimeException("Could not log in to " + ssh.getRemoteHostname() + " with the given credentials ("+user+").");
+		}
+		this.connection = ssh;
 		this.user = user;
 		this.command = command;
 	}
@@ -139,20 +163,16 @@ public class SSHCommandRunner implements Runnable {
 			 */
 			synchronized (lock) {
 //				log.info("SSH: Running '"+this.command+"' on '"+this.connection.getHostname()+"'");
-				String message = "ssh "+ connection.getHostname()+ " " + command;
-				if (this.user!=null) message = "ssh "+ user +"@"+ connection.getHostname()+" "+ command;
+				String message = "ssh "+ connection.getRemoteHostname()+ " " + command;
+				if (this.user!=null) message = "ssh "+ user +"@"+ connection.getRemoteHostname()+" "+ command;
 				logRecord.setMessage(message);
 				log.log(logRecord);
-				// sshSession.requestDumbPTY();
-				session = connection.openSession();
-				//session.startShell();
-				//session.execCommand(command);
-				session.execCommand(new String(command.getBytes("UTF-8"), "ISO-8859-1"));
-				out = new StreamGobbler(session.getStdout());
-				err = new StreamGobbler(session.getStderr());
-			}
-
-			
+				session = connection.startSession();
+				actuallCommand = session.exec(new String(command.getBytes("UTF-8"), "ISO-8859-1"));
+				actuallCommand.join(emergencyTimeoutMS,TimeUnit.MILLISECONDS);
+				out = actuallCommand.getInputStream();
+				err = actuallCommand.getErrorStream();
+			}			
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -171,35 +191,19 @@ public class SSHCommandRunner implements Runnable {
 	 * @return null if command was interrupted or timedout, the command return code otherwise
 	 */
 	public Integer waitForWithTimeout(Long timeoutMS) {
-		/*getStderr();
-		getStdout();*/
-		//causes problem when another thread is reading the 'live' output.
-		
-		int res = 0;
-		boolean timedOut = false;
-		int cond = ChannelCondition.EXIT_STATUS | ChannelCondition.EOF;
-		long startTime = System.currentTimeMillis();
-		while (!kill && 
-				((res & cond) != cond)){
-			if (timeoutMS != null && System.currentTimeMillis() - startTime > timeoutMS) {
-				timedOut = true;
-				break;
-			}
-      /* try { */
-        res = session.waitForCondition(cond, 1000);
-        /* } 
-      catch (InterruptedException ie) {
-          ie.printStackTrace();
-          } */
+		try {
+			session.join(timeoutMS, TimeUnit.MILLISECONDS);
+			this.exitCode = actuallCommand.getExitStatus();
+			this.out = actuallCommand.getInputStream();// actuallCommand.getInputtream();
+			this.err = actuallCommand.getErrorStream();
+			actuallCommand.close();
+			session.close();
+			return this.exitCode;
+		} catch (ConnectionException ex) {
+			return null;
+		} catch (TransportException ex) {
+			return null;
 		}
-		Integer exitCode = null;
-		if (! (kill || timedOut))
-			exitCode = getExitCode();
-				
-		session.close();
-
-		kill=false;
-		return exitCode;
 	}
 	
 	public boolean isDone(){
@@ -245,7 +249,7 @@ public class SSHCommandRunner implements Runnable {
 	
 	
 	public Integer getExitCode() {
-		return session.getExitStatus();
+		return this.exitCode;
 	}
 
 	public int getFreeLocalPort() throws IOException {
@@ -299,22 +303,6 @@ public class SSHCommandRunner implements Runnable {
 		reset();
 		this.command = command;
 	}
-
-  public ForwardedPort forwardPort(int remotePort) throws IOException {
-    return forwardPort(remotePort, "localhost", getFreeLocalPort());
-  }
-
-  public ForwardedPort forwardPort(int remotePort,
-      String remoteHost) throws IOException {
-    return forwardPort(remotePort, remoteHost, getFreeLocalPort());
-  }
-
-  public ForwardedPort forwardPort(int remotePort,
-      String remoteHost, int localPort) throws IOException {
-    return new ForwardedPort(remotePort, remoteHost, localPort,
-        this.connection.createLocalPortForwarder(localPort, remoteHost,
-        remotePort));
-  }
 
 	public String getCommand() {
 		return command;
@@ -429,7 +417,7 @@ public class SSHCommandRunner implements Runnable {
 	}
 
 	
-	public Connection getConnection() {
+	public SSHClient getConnection() {
 		return connection;
 	}
 	
@@ -510,7 +498,7 @@ public class SSHCommandRunner implements Runnable {
 		System.out.println("exit code: " + exitcode);*/
 		
 
-		Logger log = Logger.getLogger(SSHCommandRunner.class.getName());
+		//Logger log = Logger.getLogger(SSHCommandRunner.class.getName());
 		SSHCommandRunner scr = new SSHCommandRunner("f14-1.usersys.redhat.com", "root", "dog8code", "sdf", "sdfs", null);
 		scr.runCommandAndWait("sleep 5;echo 'hi there';sleep 3", true);
 		System.out.println("Result: " + scr.getStdout());

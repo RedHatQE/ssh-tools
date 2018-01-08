@@ -81,16 +81,17 @@ public class ExecCommands {
 		//FIXME - need to read in from config file
 		//HarnessConfiguration.BROWSER_TYPE.equalsIgnoreCase("*iehta")
 		
-		if(false){
-			log.info("in ms windows");
-			results = submitCommandtoWindows(showLogResults, command, arguments);
-		}
-		else{
-			results = submitCommandToLocalWithReturnPrivate(showLogResults, command, arguments).trim();
-		}
+		//if(false){
+		//	log.info("in ms windows");
+		//	results = submitCommandtoWindows(showLogResults, command, arguments);
+		//}
+		//else{
+		results = submitCommandToLocalWithReturnPrivate(showLogResults, command, arguments).trim();
+		//}
 		return results;
 	}
 
+	@SuppressWarnings("unused")
 	private String submitCommandtoWindows(boolean showLogResults,String command, String arguments) throws IOException{
 
 		String fullCommand;

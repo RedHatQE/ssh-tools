@@ -5,8 +5,9 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.SCPClient;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.userauth.keyprovider.KeyProvider;
+import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
 
 public class SCPTools {
 	protected String userName;
@@ -14,8 +15,8 @@ public class SCPTools {
 	protected String password;
 	protected String server;
 	protected static Logger log = Logger.getLogger(SCPTools.class.getName());
-	protected Connection connection = null;
-	protected SCPClient client = null;
+	protected SSHClient connection = null;
+	protected SCPFileTransfer client = null;
 	
 	public SCPTools(String server,
 			String user,
@@ -42,7 +43,7 @@ public class SCPTools {
 
 		try {
 			init();
-			client.put(source, dest);
+			client.upload(source, dest);
 		} catch (IOException e) {
 			log.log(Level.INFO, "SCP: File transfer failed:", e);
 			return false;
@@ -70,7 +71,7 @@ public class SCPTools {
 
 		try {
 			init();
-			client.get(remoteFile, target);
+			client.download(remoteFile, target);
 		
 		} catch (IOException e) {
 			log.log(Level.INFO, "SCP: File transfer failed:", e);
@@ -83,29 +84,36 @@ public class SCPTools {
 
 	
 	public void close() {
-		connection.close();
+		try {
+			connection.disconnect();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private void init() throws IOException{
 		if (connection == null) {
 			connection = connect_server();
-			client = new SCPClient(connection);
+			client = connection.newSCPFileTransfer();
 		}
 	}
 	
-	private Connection connect_server() throws IOException{
-		Connection newConn = new Connection(server);
+	private SSHClient connect_server() throws IOException{
+		SSHClient ssh = new SSHClient();
 		try {
-			newConn.connect();
-			newConn.authenticateWithPublicKey(userName, sshPemFile, password);
+      ssh.loadKnownHosts();
+			ssh.connect(server);
+			KeyProvider keyProvider = ssh.loadKeys(sshPemFile.toString(), password);
+			ssh.authPublickey(userName, keyProvider);
+			if(!ssh.isAuthenticated()) {
+        log.log(Level.INFO, "SCP: auth public key failed, trying auth password.");
+				ssh.authPassword(userName, password);
+			}
 		} catch (IOException e) {
-			newConn = new Connection(server);
-			try{newConn.connect();}
-			catch(IOException ioe){log.log(Level.INFO, "SCP: Connection failed:", ioe);}
-			newConn.authenticateWithPassword(userName, password);
-			
+			log.log(Level.INFO, "SCP: Connection failed:", e);			
 		}
-		return newConn;
+		return ssh;
 	}
 	
 	public static void main(String... args) {

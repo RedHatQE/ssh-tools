@@ -2,42 +2,27 @@ package com.redhat.qe.tools;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import com.redhat.qe.Assert;
 import com.redhat.qe.jul.TestRecords;
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.SCPClient;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.channel.direct.Session;
+import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
 
 public class RemoteFileTasks {
 	protected static Logger log = Logger.getLogger(RemoteFileTasks.class.getName());
 
-	/**
-	 * Create a file on a remote machine with given contents
-	 * @param conn - A connection object already created to connect to ssh server
-	 * @param filePath - path to the file you want to create (including dir and filename)
-	 * @param contents - contents of the file you want to create
-	 * @throws IOException
-	 * @author jweiss
-	 */
-	public static void createFile(Connection conn, String filePath, String contents, String mode) throws IOException  {
-		String dir = new File(filePath).getParent();
-		String fn =  new File(filePath).getName();
-		
-		log.log(Level.INFO, "Creating " + fn + " in " + dir + " on " + conn.getHostname(), TestRecords.Style.Action);
-		SCPClient scp = new SCPClient(conn);
-		scp.put(contents.getBytes(), fn, dir, mode);
-	}
-
-	public static void createFile(Connection conn, String filePath, String contents) throws IOException  {
-		createFile(conn, filePath, contents, "0755");
-	}
-	
 	/**
 	 * Use echo to create a file with the given contents.  Then use chmod to give permissions to the file.
 	 * @param runner
@@ -52,20 +37,26 @@ public class RemoteFileTasks {
 		if (exitCode==0 && perms!=null) exitCode = runCommandAndWait(runner, "chmod "+perms+" "+filePath, TestRecords.action());
 		return exitCode;
 	}
-	
+
+	public static void createFile(SSHCommandRunner runner, String filePath, String contents) throws IOException, InterruptedException  {
+		createFile(runner, filePath, contents, "0755");
+	}
+
 	/**
 	 * Copy file(s) onto a remote machine 
 	 * @param conn - A connection object already created to connect to ssh server
 	 * @param destDir -  path where the file(s) should go on the remote machine (must be dir)
 	 * @param source - one or more paths to the file(s) you want to copy to the remote dir
 	 * @throws IOException
-	 * @author jweiss
+	 * @author jweiss, jstavel
 	 */
-	public static void putFiles(Connection conn, String destDir, String... sources ) throws IOException  {
-		for (String source: sources)
-			log.log(Level.INFO, "Copying " + source + " to " + destDir + " on " + conn.getHostname(), TestRecords.Style.Action);
-		SCPClient scp = new SCPClient(conn);
-		scp.put(sources, destDir);
+	public static void putFiles(SSHCommandRunner runner, String destDir, String... sources ) throws IOException  {
+    SSHClient client = runner.getConnection();
+		SCPFileTransfer xfer = client.newSCPFileTransfer();
+		for (String source: sources) {
+			log.log(Level.INFO, "Copying " + source + " to " + destDir + " on " + client.getRemoteHostname(), TestRecords.Style.Action);
+			xfer.upload(source,destDir);
+		};
 	}
 	
 	/**
@@ -75,19 +66,26 @@ public class RemoteFileTasks {
 	 * 	(if path ends in trailing slash, it's assumed to be a dir, and the source filename is used) 
 	 * @param mask - permissions on file, eg, "0755"
 	 * @throws IOException
-	 * @author jweiss
+	 * @author jweiss, jstavel
 	 */
-	public static void putFile(Connection conn, String source, String dest, String mask) throws IOException  {
-		log.log(Level.INFO, "Copying local file " + source + " to " + dest + " on " + conn.getHostname() + " with mask " + mask, TestRecords.Style.Action);
-		SCPClient scp = new SCPClient(conn);
-		if (dest.endsWith("/")) {
-			scp.put(new String[] {source}, null, dest, mask);
-		}
-		else {
-			String destDir = new File(dest).getParentFile().getCanonicalPath();
-			String destFile = new File(dest).getName();
-			scp.put(new String[] {source}, new String[] {destFile}, destDir, mask);
-		}
+	public static void putFile(SSHCommandRunner runner, String source, String dest, String mask) throws IOException  {
+		assert(Pattern.matches("^[0-7]{3,4}", mask));
+    SSHClient client = runner.getConnection();
+		log.log(Level.INFO, "Copying local file " + source + " to " + dest + " on " + client.getRemoteHostname() + " with mask " + mask, TestRecords.Style.Action);
+		client.newSCPFileTransfer().upload(source, dest);
+    runner.runCommandAndWait("(test -d '" + dest + "')" + " && (echo 'is directory!')");
+    final String isDirectorySTDOUT = runner.getStdout().trim();
+    if (isDirectorySTDOUT.equals("is directory!")) {
+      log.log(Level.INFO, dest + " - is a directory.....");
+      	Path destFileName = Paths.get(dest, new File(source).getName());
+        final String command = "chmod " + mask + " '" + destFileName + "'";
+        log.log(Level.INFO, command);
+      	runner.runCommand(command);
+    } else {
+      log.log(Level.INFO, dest + " - is not a directory.");
+      final String command = "chmod " + mask + " '" + dest + "'";
+      runner.runCommand(command);
+    }
 	}
 	
 	/**
@@ -96,16 +94,18 @@ public class RemoteFileTasks {
 	 * @param localTargetDirectory - Local directory to put the downloaded file(s).
 	 * @param remoteFiles - Path and name(s) of the remote file(s)
 	 * @throws IOException
-	 * @author jsefler
+	 * @author jsefler, jstavel
 	 */
-	public static void getFiles(Connection conn, String localTargetDirectory, String... remoteFiles ) throws IOException {
-		for (String remoteFile: remoteFiles)
-			log.log(Level.INFO, "Copying remote file "+remoteFile+" on "+conn.getHostname()+" to local directory "+localTargetDirectory+".", TestRecords.Style.Action);
-		SCPClient scp = new SCPClient(conn);
-		scp.get(remoteFiles, localTargetDirectory);
+	public static void getFiles(SSHCommandRunner runner, String localTargetDirectory, String... remoteFiles ) throws IOException {
+    SSHClient client = runner.getConnection();
+		SCPFileTransfer xfer = client.newSCPFileTransfer();
+		for (String remoteFile: remoteFiles) {
+			log.log(Level.INFO, "Copying remote file "+remoteFile+" on "+client.getRemoteHostname()+" to local directory "+localTargetDirectory+".", TestRecords.Style.Action);
+			xfer.download(remoteFile, localTargetDirectory);
+		}
 	}
-	public static void getFile(Connection conn, String localTargetDirectory, String remoteFile ) throws IOException {
-		getFiles(conn,localTargetDirectory,remoteFile);
+	public static void getFile(SSHCommandRunner runner, String localTargetDirectory, String remoteFile ) throws IOException {
+		getFiles(runner,localTargetDirectory,remoteFile);
 	}
 	
 	/**
