@@ -48,7 +48,6 @@ public class SSHCommandRunner implements Runnable {
 		super();
 		this.connection = connection;
 		this.command = command;
-    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
     this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
 	
@@ -61,7 +60,6 @@ public class SSHCommandRunner implements Runnable {
 		super();
 
     this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
-    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
 
 		SSHClient ssh = new SSHClient();
     if( !this.verifyHosts ) {
@@ -73,7 +71,7 @@ public class SSHCommandRunner implements Runnable {
 		KeyProvider keyProvider = ssh.loadKeys(sshPemFile.toString(), passphrase);
 		ssh.authPublickey(user, keyProvider);
 		if(!ssh.isAuthenticated()) {
-			throw new RuntimeException("Could not log in to " + ssh.getRemoteHostname() + " with the given credentials ("+user+").");						
+			throw new RuntimeException("Could not log in to " + ssh.getRemoteHostname() + " with the given credentials ("+user+").");
 		}
 		this.connection = ssh;
 		this.user = user;
@@ -88,7 +86,6 @@ public class SSHCommandRunner implements Runnable {
 			String command) throws IOException{
 		super();
 
-    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
     this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 
 		SSHClient ssh = new SSHClient();
@@ -117,7 +114,6 @@ public class SSHCommandRunner implements Runnable {
 			String command) throws IOException{
 		super();
 
-    this.emergencyTimeoutMS = Long.parseLong(System.getProperty("ssh.emergencyTimeoutMS","1000"));
     this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 
 		SSHClient ssh = new SSHClient();
