@@ -164,7 +164,10 @@ public class SSHCommandRunner implements Runnable {
 				logRecord.setMessage(message);
 				log.log(logRecord);
 				session = connection.startSession();
+/* this nolonger works after the switch from trilead ssh to sshj library commit 832a45b8ec124876240fc242e9aa0065be45e867
 				actuallCommand = session.exec(new String(command.getBytes("UTF-8"), "ISO-8859-1"));
+effectively reverting commit 8e10013a8390e9d02179f4ee76491387325c3703 */
+				actuallCommand = session.exec(command);
 				actuallCommand.join(emergencyTimeoutMS,TimeUnit.MILLISECONDS);
 				out = actuallCommand.getInputStream();
 				err = actuallCommand.getErrorStream();
