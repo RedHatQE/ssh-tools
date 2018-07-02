@@ -33,8 +33,9 @@ public class RemoteFileTasks {
 	 * @author jsefler
 	 */
 	public static int createFile(SSHCommandRunner runner, String filePath, String contents, String perms) {
-		int exitCode = runCommandAndWait(runner, "echo -n -e '"+contents+"' > "+filePath, TestRecords.action());
-		if (exitCode==0 && perms!=null) exitCode = runCommandAndWait(runner, "chmod "+perms+" "+filePath, TestRecords.action());
+		//int exitCode = runCommandAndWait(runner, "echo -n -e '"+contents+"' > "+filePath, TestRecords.action());
+		int exitCode = runCommandAndWait(runner, "echo -n -e '"+contents+"' | sudo tee -a "+filePath, TestRecords.action());
+		if (exitCode==0 && perms!=null) exitCode = runCommandAndWait(runner, "sudo chmod "+perms+" "+filePath, TestRecords.action());
 		return exitCode;
 	}
 
@@ -120,7 +121,7 @@ public class RemoteFileTasks {
 	 * 
 	 */
 	public static int searchReplaceFile (SSHCommandRunner runner, String filePath, String regexp, String replacement) {
-		return runCommandAndWait(runner, "sed -i 's/"+regexp+"/"+replacement+"/g' " + filePath, TestRecords.action());
+		return runCommandAndWait(runner, "sudo sed -i 's/"+regexp+"/"+replacement+"/g' " + filePath, TestRecords.action());
 	}
 	
 	/**
@@ -132,7 +133,7 @@ public class RemoteFileTasks {
 	 * @return - exit code from grep
 	 */
 	public static int grepFile (SSHCommandRunner runner, String filePath, String pattern) {
-		return runCommandAndWait(runner, "grep -E '" + pattern + "' " + filePath, TestRecords.info());
+		return runCommandAndWait(runner, "sudo grep -E '" + pattern + "' " + filePath, TestRecords.info());
 	}
 	
 	/**
@@ -145,7 +146,7 @@ public class RemoteFileTasks {
 	 * @author jsefler
 	 */
 	public static int deleteLines (SSHCommandRunner runner, String filePath, String containingText) {
-		return runCommandAndWait(runner, "sed -i '/"+containingText+"/d' " + filePath, TestRecords.action());
+		return runCommandAndWait(runner, "sudo sed -i '/"+containingText+"/d' " + filePath, TestRecords.action());
 	}
 	
 	/**
@@ -158,7 +159,8 @@ public class RemoteFileTasks {
 	 */
 	public static int markFile (SSHCommandRunner runner, String filePath, String marker) {
 		if (!testExists(runner, filePath)) return 1;	// avoid inadvertently creating a file that does not exist
-		return runCommandAndWait(runner, "echo '"+marker+"' >> "+filePath, TestRecords.action());
+		//return runCommandAndWait(runner, "sudo echo '"+marker+"' >> "+filePath, TestRecords.action());
+		return runCommandAndWait(runner, "echo '"+marker+"' | sudo tee -a "+filePath, TestRecords.action());
 	}
 	
 	/**
@@ -194,9 +196,9 @@ public class RemoteFileTasks {
 		
 		/* EFFICIENT ALGORITHM DATED 1/28/2013 */
 		if (grepPattern!=null) {
-			return runCommandAndAssert(runner,"awk '/"+marker+"/,0' "+filePath+" | grep -v --text '"+marker+"' | grep --text '"+grepPattern+"'",0,1).getStdout();
+			return runCommandAndAssert(runner,"sudo awk '/"+marker+"/,0' "+filePath+" | grep -v --text '"+marker+"' | grep --text '"+grepPattern+"'",0,1).getStdout();
 		} else {
-			return runCommandAndAssert(runner,"awk '/"+marker+"/,0' "+filePath+" | grep -v --text '"+marker+"'",0,1).getStdout();
+			return runCommandAndAssert(runner,"sudo awk '/"+marker+"/,0' "+filePath+" | grep -v --text '"+marker+"'",0,1).getStdout();
 		}
 	}
 	
@@ -210,7 +212,7 @@ public class RemoteFileTasks {
 	 */
 	@Deprecated
 	public static int testFileExists (SSHCommandRunner runner, String filePath) {
-		runCommandAndWait(runner, "test -e "+filePath+" && echo 1 || echo 0", TestRecords.info());
+		runCommandAndWait(runner, "sudo test -e "+filePath+" && echo 1 || echo 0", TestRecords.info());
 		if (runner.getStdout().trim().equals("1")) return 1;
 		if (runner.getStdout().trim().equals("0")) return 0;
 		return -1;
@@ -226,7 +228,7 @@ public class RemoteFileTasks {
 	 * @author jsefler
 	 */
 	public static boolean testExists (SSHCommandRunner runner, String filePath) {
-		SSHCommandResult result = runner.runCommandAndWait("test -e "+filePath);
+		SSHCommandResult result = runner.runCommandAndWait("sudo test -e "+filePath);
 		return (result.exitCode==0)?true:false;
 		
 		// Note: Another more informative way to implement this is using: stat filePath
