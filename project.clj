@@ -6,11 +6,13 @@
   :javac-options {:debug "on"}
   :dependencies [[com.redhat.qe/jul.test.records "1.0.1"],
                  [com.redhat.qe/assertions "1.0.2"]
-                 [com.hierynomus/sshj "0.27.0"]
+                 [com.hierynomus/sshj "0.21.0"]
                  [org.bouncycastle/bcprov-jdk15on "1.61"]
                  [org.bouncycastle/bcpkix-jdk15on "1.61"]
                  [com.jcraft/jzlib "1.1.3"]
                  [org.clojure/clojure "1.8.0"]
+                 [org.clojure/tools.logging "0.4.1"]
+                 [org.slf4j/slf4j-log4j12 "1.7.26"]
                  [net.i2p.crypto/eddsa "0.3.0"]]
   :repositories [["jenkins-ci" "https://repo.jenkins-ci.org/public"]]
   :deploy-repositories [["releases" :clojars]

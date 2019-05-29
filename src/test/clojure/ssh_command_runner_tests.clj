@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.string :as s]
             [clojure.java.io :as io]
+            [clojure.tools.logging :as log]
             [config.core :refer [env]])
   (:import [com.redhat.qe.tools SSHCommandRunner]
            [net.schmizz.sshj SSHClient]
