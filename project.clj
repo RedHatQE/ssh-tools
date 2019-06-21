@@ -1,4 +1,4 @@
-(defproject com.redhat.qe/ssh-tools "2.0.2-SNAPSHOT"
+(defproject com.redhat.qe/ssh-tools "2.0.3-SNAPSHOT"
   :description "A wrapper for sshj and some CLI tools"
   :java-source-paths ["src/main/java"] ;lein2
   :source-paths ["src/main/clojure"]
@@ -6,7 +6,7 @@
   :javac-options {:debug "on"}
   :dependencies [[com.redhat.qe/jul.test.records "1.0.1"],
                  [com.redhat.qe/assertions "1.0.2"]
-                 [com.hierynomus/sshj "0.21.0"]
+                 [com.hierynomus/sshj "0.27.0"]
                  [org.bouncycastle/bcprov-jdk15on "1.61"]
                  [org.bouncycastle/bcpkix-jdk15on "1.61"]
                  [com.jcraft/jzlib "1.1.3"]
