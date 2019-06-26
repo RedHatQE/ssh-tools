@@ -132,3 +132,14 @@
           stderr (. cmd getStderr)]
       (is (s/starts-with? @hostname stdout))
       (is (s/blank? stderr)))))
+
+(deftest jmolet-debug
+  (System/setProperty "ssh.verifyHosts" "false")
+  (let [key-file (io/file @private-key-path)
+        cmd (new SSHCommandRunner @hostname @user @private-key-path @private-key-password nil)]
+    (.runCommand cmd "ls /")
+    (let [stdout (.. cmd getStdout trim)
+          stderr (. cmd getStderr)]
+      (is (= 0 (. cmd getExitCode)))
+      (is (s/starts-with? @hostname stdout))
+      (is (s/blank? stderr)))))
