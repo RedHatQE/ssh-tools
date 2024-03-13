@@ -1,5 +1,6 @@
 (defproject com.github.redhatqe/ssh-tools "2.1.2-SNAPSHOT"
   :description "A wrapper for sshj and some CLI tools"
+  :url "https://github.com/RedHatQE/ssh-tools"
   :java-source-paths ["src/main/java"] ;lein2
   :source-paths ["src/main/clojure"]
   :test-paths ["src/test/clojure"]
