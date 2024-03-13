@@ -6,7 +6,7 @@
   :javac-options {:debug "on"}
   :dependencies [[com.redhat.qe/jul.test.records "1.0.1"],
                  [com.redhat.qe/assertions "1.0.2"]
-                 [com.hierynomus/sshj "0.35.0"]
+                 [com.hierynomus/sshj "0.38.0"]
                  [org.bouncycastle/bcprov-jdk15on "1.70"]
                  [com.jcraft/jzlib "1.1.3"]
                  [org.clojure/clojure "1.8.0"]
