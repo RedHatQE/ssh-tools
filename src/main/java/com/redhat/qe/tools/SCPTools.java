@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.keyprovider.KeyProvider;
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
 
@@ -14,6 +15,8 @@ public class SCPTools {
 	protected File sshPemFile;
 	protected String password;
 	protected String server;
+	protected int port = 22;  // default SSH port
+	protected boolean verifyHosts = true;  // you can change the value by a system property `ssh.verifyHosts`
 	protected static Logger log = Logger.getLogger(SCPTools.class.getName());
 	protected SSHClient connection = null;
 	protected SCPFileTransfer client = null;
@@ -22,20 +25,35 @@ public class SCPTools {
 			String user,
 			File sshPemFile,
 			String password){
+		this(server, 22, user, sshPemFile, password);
+	}
+
+	public SCPTools(String server,
+			int port,
+			String user,
+			File sshPemFile,
+			String password){
 		this.userName = user;
 		this.sshPemFile = sshPemFile;
 		this.password = password;
 		this.server = server;
+		this.port = port;
+		this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
 	}
-	
+
 	public SCPTools(String server,
 			String user,
 			String sshPemFileLoc,
 			String password){
-		this.userName = user;
-		this.sshPemFile = new File(sshPemFileLoc);
-		this.password = password;
-		this.server = server;
+		this(server, 22, user, new File(sshPemFileLoc), password);
+	}
+
+	public SCPTools(String server,
+			int port,
+			String user,
+			String sshPemFileLoc,
+			String password){
+		this(server, port, user, new File(sshPemFileLoc), password);
 	}
 	
 	public boolean sendFile(String source, String dest){
@@ -102,8 +120,12 @@ public class SCPTools {
 	private SSHClient connect_server() throws IOException{
 		SSHClient ssh = new SSHClient();
 		try {
+      if( !this.verifyHosts ) {
+        log.info("SCP: host verification has been switched OFF");
+        ssh.addHostKeyVerifier(new PromiscuousVerifier());
+      }
       ssh.loadKnownHosts();
-			ssh.connect(server);
+			ssh.connect(server, port);
 			KeyProvider keyProvider = ssh.loadKeys(sshPemFile.toString(), password);
 			ssh.authPublickey(userName, keyProvider);
 			if(!ssh.isAuthenticated()) {
@@ -111,7 +133,7 @@ public class SCPTools {
 				ssh.authPassword(userName, password);
 			}
 		} catch (IOException e) {
-			log.log(Level.INFO, "SCP: Connection failed:", e);			
+			log.log(Level.INFO, "SCP: Connection failed:", e);
 		}
 		return ssh;
 	}

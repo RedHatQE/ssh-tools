@@ -7,10 +7,10 @@
             [config.core :refer [env]])
   (:import [com.redhat.qe.tools SSHCommandRunner]
            [com.redhat.qe.tools RemoteFileTasks]
-           [net.schmizz.sshj.xfer.scp.SCPFileTransfer]
            [java.util UUID]))
 
 (def hostname (atom ""))
+(def port (atom 22))
 (def user (atom ""))
 (def password (atom ""))
 (def private-key-path (atom ""))
@@ -18,6 +18,7 @@
 
 (defn load-config [f]
   (reset! hostname (:server-hostname env))
+  (reset! port (or (:server-port env) 22))
   (reset! user (:server-user env))
   (reset! password (:server-password env))
   (reset! private-key-path (:private-key-path env))
@@ -29,7 +30,7 @@
 (deftest scpfiletransfer-test
   (let [uuid (-> (UUID/randomUUID) .toString)
         tmp-dir (io/file "/tmp" uuid)
-        runner (new SSHCommandRunner @hostname @user @password "hostname")
+        runner (new SSHCommandRunner @hostname @port @user @password "hostname")
         file01 (-> "src/test/resources/file01.txt" io/file)]
     (is (.exists file01))
     (.runCommand runner (str "mkdir " tmp-dir))
@@ -45,7 +46,7 @@
 (deftest put-file-test
   (let [uuid (-> (UUID/randomUUID) .toString)
         tmp-dir (io/file "/tmp" uuid)
-        runner (new SSHCommandRunner @hostname @user @password "hostname")
+        runner (new SSHCommandRunner @hostname @port @user @password "hostname")
         file01 (-> "src/test/resources/file01.txt" io/file)]
     (is (.exists file01))
     (.runCommand runner (str "mkdir " tmp-dir))
@@ -64,7 +65,7 @@
 (deftest put-files-test
   (let [uuid (-> (UUID/randomUUID) .toString)
         tmp-dir (io/file "/tmp" uuid)
-        runner (new SSHCommandRunner @hostname @user @password "hostname")
+        runner (new SSHCommandRunner @hostname @port @user @password "hostname")
         file01 (-> "src/test/resources/file01.txt" io/file)
         file02 (-> "src/test/resources/file02.txt" io/file)]
     (is (.exists file01))
@@ -86,7 +87,7 @@
   (let [uuid (-> (UUID/randomUUID) .toString)
         tmp-dir (io/file "/tmp" uuid)
         path-of-tmp-dir (.toString tmp-dir)
-        runner (new SSHCommandRunner @hostname @user @password "hostname")
+        runner (new SSHCommandRunner @hostname @port @user @password "hostname")
         file01 (-> "src/test/resources/file01.txt" io/file)
         file02 (-> "src/test/resources/file02.txt" io/file)]
     (.runCommand runner (str "mkdir " tmp-dir))
@@ -124,7 +125,7 @@
   (let [uuid (-> (UUID/randomUUID) .toString)
         tmp-dir (io/file "/tmp" uuid)
         path-of-tmp-dir (.toString tmp-dir)
-        runner (new SSHCommandRunner @hostname @user @password "hostname")
+        runner (new SSHCommandRunner @hostname @port @user @password "hostname")
         file01 (-> "src/test/resources/file01.txt" io/file)
         file02 (-> "src/test/resources/file02.txt" io/file)]
     (.runCommand runner (str "mkdir " tmp-dir))
