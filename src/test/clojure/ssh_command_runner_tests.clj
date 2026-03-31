@@ -13,6 +13,7 @@
            [net.schmizz.sshj.connection.channel.direct Session]))
 
 (def hostname (atom ""))
+(def port (atom 22))
 (def user (atom ""))
 (def password (atom ""))
 (def private-key-path (atom ""))
@@ -20,6 +21,7 @@
 
 (defn load-config [f]
   (reset! hostname (:server-hostname env))
+  (reset! port (or (:server-port env) 22))
   (reset! user (:server-user env))
   (reset! password (:server-password env))
   (reset! private-key-path (:private-key-path env))
@@ -32,7 +34,7 @@
   (let [ssh (new SSHClient)]
     (doto ssh
       .loadKnownHosts
-      (.connect @hostname)
+      (.connect @hostname @port)
       (.authPassword @user @password))
     (let [session (.startSession ssh)]
       (let [cmd (.exec session "hostname")]
@@ -44,7 +46,7 @@
   (let [ssh (new SSHClient)]
     (doto ssh
       .loadKnownHosts
-      (.connect @hostname))
+      (.connect @hostname @port))
     (let [keypar (.loadKeys ssh
                             (-> @private-key-path
                                 io/file
@@ -62,7 +64,7 @@
     (doto ssh
       (.addHostKeyVerifier (new PromiscuousVerifier))
       .loadKnownHosts
-      (.connect @hostname))
+      (.connect @hostname @port))
     (let [keypar (.loadKeys ssh
                             (-> @private-key-path
                                 io/file
@@ -76,7 +78,7 @@
     (.close ssh)))
 
 (deftest ssh-command-runner-test
-  (let [cmd (new SSHCommandRunner @hostname @user @password "hostname")]
+  (let [cmd (new SSHCommandRunner @hostname @port @user @password "hostname")]
     (.runCommand cmd "hostname")
     (let [stdout (.. cmd getStdout trim)
           stderr (. cmd getStderr)]
@@ -89,7 +91,7 @@
 
 (deftest ssh-command-runner-rsa-key-test
   (let [key-file (io/file @private-key-path)
-        cmd (new SSHCommandRunner @hostname @user key-file @password "hostname")]
+        cmd (new SSHCommandRunner @hostname @port @user key-file @password "hostname")]
     (.runCommand cmd "hostname")
     (let [stdout (.. cmd getStdout trim)
           stderr (. cmd getStderr)]
@@ -101,12 +103,12 @@
       (is (= 0 (. cmd getExitCode))))))
 
 (deftest ssh-command-runner-long-command-test
-  (let [cmd (new SSHCommandRunner @hostname @user @password "hostname")]
+  (let [cmd (new SSHCommandRunner @hostname @port @user @password "hostname")]
     (is (thrown? RuntimeException
                  (.runCommand cmd "hostname && sleep 2")))))
 
 (deftest ssh-command-runner-long-command-with-timeout-test
-  (let [cmd (new SSHCommandRunner @hostname @user @password "hostname")]
+  (let [cmd (new SSHCommandRunner @hostname @port @user @password "hostname")]
     (.setEmergencyTimeout cmd 10000)
     (.runCommand cmd "hostname && sleep 2")
     (let [stdout (.. cmd getStdout trim)
@@ -116,7 +118,7 @@
 
 (deftest ssh-command-runner-long-command-with-system-property-timeout-test
   (System/setProperty "ssh.emergencyTimeoutMS" "10000")
-  (let [cmd (new SSHCommandRunner @hostname @user @password "hostname")]
+  (let [cmd (new SSHCommandRunner @hostname @port @user @password "hostname")]
     (.runCommand cmd "hostname && sleep 2")
     (let [stdout (.. cmd getStdout trim)
           stderr (. cmd getStderr)]
@@ -126,7 +128,7 @@
 (deftest ssh-command-runner-rsa-key-with-system-property-verifyHosts-test
   (System/setProperty "ssh.verifyHosts" "false")
   (let [key-file (io/file @private-key-path)
-        cmd (new SSHCommandRunner @hostname @user key-file @password "hostname")]
+        cmd (new SSHCommandRunner @hostname @port @user key-file @password "hostname")]
     (.runCommand cmd "hostname")
     (let [stdout (.. cmd getStdout trim)
           stderr (. cmd getStderr)]

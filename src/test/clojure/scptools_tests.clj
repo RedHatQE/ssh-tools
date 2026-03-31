@@ -7,10 +7,10 @@
             [config.core :refer [env]])
   (:import [com.redhat.qe.tools SSHCommandRunner]
            [com.redhat.qe.tools SCPTools]
-           [net.schmizz.sshj.xfer.scp.SCPFileTransfer]
            [java.util UUID]))
 
 (def hostname (atom ""))
+(def port (atom 22))
 (def user (atom ""))
 (def password (atom ""))
 (def private-key-path (atom ""))
@@ -18,6 +18,7 @@
 
 (defn load-config [f]
   (reset! hostname (:server-hostname env))
+  (reset! port (or (:server-port env) 22))
   (reset! user (:server-user env))
   (reset! password (:server-password env))
   (reset! private-key-path (:private-key-path env))
@@ -28,8 +29,8 @@
 
 (deftest sendFile-test
   (let [ssh-key-pem-file (io/file @private-key-path)
-        scptools (new SCPTools @hostname @user ssh-key-pem-file @private-key-password)
-        runner (new SSHCommandRunner @hostname @user @password "hostname")]
+        scptools (new SCPTools @hostname @port @user ssh-key-pem-file @private-key-password)
+        runner (new SSHCommandRunner @hostname @port @user @password "hostname")]
     (let [uuid (-> (UUID/randomUUID) .toString)
           tmp-dir (io/file "/tmp" uuid)
           file01 (-> "src/test/resources/file01.txt" io/file)]
@@ -47,9 +48,9 @@
         uuid (-> (UUID/randomUUID) .toString)
         tmp-dir (io/file "/tmp" uuid)
         path-of-tmp-dir (.toString tmp-dir)
-        runner (new SSHCommandRunner @hostname @user @password "hostname")
+        runner (new SSHCommandRunner @hostname @port @user @password "hostname")
         file01 (-> "src/test/resources/file01.txt" io/file)
-        scptools (new SCPTools @hostname @user ssh-key-pem-file @private-key-password)]
+        scptools (new SCPTools @hostname @port @user ssh-key-pem-file @private-key-password)]
     (.runCommand runner (str "mkdir " tmp-dir))
     (.sendFile scptools (.getAbsolutePath file01) (.toString tmp-dir))
     (shell/with-sh-env {:LC_ALL "en_US.UTF-8"}

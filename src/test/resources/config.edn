@@ -1,4 +1,5 @@
 {:server-hostname ""
+ :server-port 22
  :server-user "root"
  :server-password ""
  :private-key-path "src/test/resources/test_rsa"

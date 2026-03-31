@@ -41,6 +41,7 @@ public class SSHCommandRunner implements Runnable {
 	protected Integer exitCode;
 	protected Command actuallCommand = null;
   protected boolean verifyHosts = true;  // you can change the value by a system property `ssh.verifyHosts`
+  protected int port = 22;  // default SSH port
 
 
 	public SSHCommandRunner(SSHClient connection,
@@ -57,9 +58,19 @@ public class SSHCommandRunner implements Runnable {
 			File sshPemFile,
 			String passphrase,
 			String command) throws IOException{
+		this(server, 22, user, sshPemFile, passphrase, command);
+	}
+
+	public SSHCommandRunner(String server,
+			int port,
+			String user,
+			File sshPemFile,
+			String passphrase,
+			String command) throws IOException{
 		super();
 
     this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
+    this.port = port;
 
 		SSHClient ssh = new SSHClient();
     if( !this.verifyHosts ) {
@@ -67,7 +78,7 @@ public class SSHCommandRunner implements Runnable {
       ssh.addHostKeyVerifier(new PromiscuousVerifier());
     }
 		ssh.loadKnownHosts();
-		ssh.connect(server);
+		ssh.connect(server, port);
 		KeyProvider keyProvider = ssh.loadKeys(sshPemFile.toString(), passphrase);
 		ssh.authPublickey(user, keyProvider);
 		if(!ssh.isAuthenticated()) {
@@ -84,9 +95,20 @@ public class SSHCommandRunner implements Runnable {
 			File sshPemFile,
 			String pemPassphrase,
 			String command) throws IOException{
+		this(server, 22, user, passphrase, sshPemFile, pemPassphrase, command);
+	}
+
+	public SSHCommandRunner(String server,
+			int port,
+			String user,
+			String passphrase,
+			File sshPemFile,
+			String pemPassphrase,
+			String command) throws IOException{
 		super();
 
     this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
+    this.port = port;
 
 		SSHClient ssh = new SSHClient();
     if( !this.verifyHosts ) {
@@ -94,13 +116,13 @@ public class SSHCommandRunner implements Runnable {
       ssh.addHostKeyVerifier(new PromiscuousVerifier());
     }
 		ssh.loadKnownHosts();
-		ssh.connect(server);
+		ssh.connect(server, port);
 		KeyProvider keyProvider = ssh.loadKeys(sshPemFile.toString(), passphrase);
 		ssh.authPublickey(user, keyProvider);
 		if(!ssh.isAuthenticated()) {
 			ssh.authPassword(user, passphrase);
 			if (!ssh.isAuthenticated()) {
-				throw new RuntimeException("Could not log in to " + ssh.getRemoteHostname() + " with the given credentials ("+user+").");	
+				throw new RuntimeException("Could not log in to " + ssh.getRemoteHostname() + " with the given credentials ("+user+").");
 			}
 		}
 		this.connection = ssh;
@@ -112,9 +134,18 @@ public class SSHCommandRunner implements Runnable {
 			String user,
 			String password,
 			String command) throws IOException{
+		this(server, 22, user, password, command);
+	}
+
+	public SSHCommandRunner(String server,
+			int port,
+			String user,
+			String password,
+			String command) throws IOException{
 		super();
 
     this.verifyHosts = Boolean.parseBoolean(System.getProperty("ssh.verifyHosts","true"));
+    this.port = port;
 
 		SSHClient ssh = new SSHClient();
     if( !this.verifyHosts ) {
@@ -122,7 +153,7 @@ public class SSHCommandRunner implements Runnable {
       ssh.addHostKeyVerifier(new PromiscuousVerifier());
     }
 		ssh.loadKnownHosts();
-		ssh.connect(server);
+		ssh.connect(server, port);
 		ssh.authPassword(user, password);
 		if (!ssh.isAuthenticated()) {
 				throw new RuntimeException("Could not log in to " + ssh.getRemoteHostname() + " with the given credentials ("+user+").");
@@ -137,7 +168,16 @@ public class SSHCommandRunner implements Runnable {
 			String sshPemFile,
 			String passphrase,
 			String command) throws IOException{
-		this(server, user, new File(sshPemFile), passphrase, command);
+		this(server, 22, user, new File(sshPemFile), passphrase, command);
+	}
+
+	public SSHCommandRunner(String server,
+			int port,
+			String user,
+			String sshPemFile,
+			String passphrase,
+			String command) throws IOException{
+		this(server, port, user, new File(sshPemFile), passphrase, command);
 	}
 
 	public SSHCommandRunner(String server,
@@ -146,7 +186,17 @@ public class SSHCommandRunner implements Runnable {
 			String sshPemFile,
 			String pemPassphrase,
 			String command) throws IOException{
-		this(server, user, passphrase, new File(sshPemFile), pemPassphrase, command);
+		this(server, 22, user, passphrase, new File(sshPemFile), pemPassphrase, command);
+	}
+
+	public SSHCommandRunner(String server,
+			int port,
+			String user,
+			String passphrase,
+			String sshPemFile,
+			String pemPassphrase,
+			String command) throws IOException{
+		this(server, port, user, passphrase, new File(sshPemFile), pemPassphrase, command);
 	}
 
 	
