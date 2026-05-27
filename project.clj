@@ -1,4 +1,4 @@
-(defproject com.github.redhatqe/ssh-tools "2.2.0-SNAPSHOT"
+(defproject com.github.redhatqe/ssh-tools "2.2.0"
   :description "A wrapper for sshj and some CLI tools"
   :url "https://github.com/RedHatQE/ssh-tools"
   :license {:name "GPL-3.0"
